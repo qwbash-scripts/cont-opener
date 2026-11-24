@@ -1,0 +1,14 @@
+{
+  "distribute": {
+    "constants": {
+      "MOONLY_BUNDLED": true,
+      "MOONLY_BUNDLE_TIMESTAMP": "<$date>"
+    },
+    "exclude": [],
+    "include": [],
+    "output": "dist"
+  },
+  "library": "lib",
+  "name": "cont-opener",
+  "source": "src"
+}
