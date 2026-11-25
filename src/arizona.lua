@@ -75,6 +75,7 @@ function Arizona:Init()
                                 wait(350)
                                 CEF:send(string.format('clickOnButton|{"type": 50, "slot": %d, "action": 1}', table.random_key(containers.accessible_containers_in_wallet)))
                                 CEF:evalcef("window.executeEvent('event.setActiveView', '[ null ]');")
+                                CEF:evalcef("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
                             end)
                         end
                     end
@@ -89,6 +90,7 @@ function Arizona:Init()
                                     lua_thread.create(function()
                                         wait(350)
                                         CEF:send(string.format('clickOnButton|{"type": 1, "slot": %d, "action": 1}', table.random_key(containers.accessible_containers)))
+                                        CEF:evalcef("window.executeEvent('event.setActiveView', '[ null ]');")
                                     end)
                                 else
                                     lua_thread.create(function()
@@ -171,10 +173,12 @@ function Arizona:Init()
                     end
 
                     if autoOpen and event == 'event.setActiveView' and data:find('%["ContainerContent"%]') then
+                        -- lua_thread.create(function()
+                        --     wait(250)
                         CEF:send('containerContent.closeMenu')
-                        CEF:send('onActiveViewChanged|null')
                         CEF:evalcef("window.executeEvent('event.setActiveView', '[ null ]');")
-                        return false
+                        CEF:evalcef("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
+                        -- end)
                     end
 
                     if event == 'event.notify.initialize' and data:find('Открыть можно только на территории аукциона контейнеров') then

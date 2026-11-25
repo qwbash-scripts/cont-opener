@@ -1,5 +1,6 @@
 --  огда делал это еще не пон€л, что в CEF'е контейнера количество предметов пишетс€ без учЄта бонусов
 -- думал по пизде сохран€етс€ дроп. ну пусть будет, хуле
+-- да, Drop:apply никогда не будет использован во врем€ работы скрипта
 Drop = {}
 
 dropPending = {}
@@ -27,11 +28,9 @@ function Drop:apply(date, items)
     if containerDropCollector[date] == nil then
         containerDropCollector[date] = {}
     end
-    print(table.toString(items))
+
     for _, item in pairs(items) do
-        print(string.format('title: %s ; count: %s', item.title, item.count))
         local entry = containerDropCollector[date][item.title]
-        print(table.toString(entry or {}))
         if entry == nil then
             entry = { name = item.title, amount = 0 }
             containerDropCollector[date][item.title] = entry
@@ -41,9 +40,7 @@ function Drop:apply(date, items)
             containerDropPrices[item.title] = { price = imgui.new.int(1000) }
             containerDropPrices()
         end
-        print(string.format('entry.amount before = %s', entry.amount))
         entry.amount = entry.amount + item.count
-        print(string.format('entry.amount after = %s', entry.amount))
     end
 end
 

@@ -1,21 +1,22 @@
 EarnedMoneyFormulas = { u8('Без ничего'), u8('Уровень ВИП'), u8('Выбранная сумка'), u8('Уровень ВИП + Выбранная сумка') }
 UI = {
-    window = imgui.new.bool(true),
+    window = imgui.new.bool(false),
     currentDateLog = '',
     earnedMoney = 0,
     cryptoWalletsCombo = imgui.new['const char*'][#crypto_wallet.list](crypto_wallet.list),
     EarnedMoneyFormulasCombo = imgui.new['const char*'][#EarnedMoneyFormulas](EarnedMoneyFormulas),
-    priceFilter = imgui.ImGuiTextFilter(),
+    priceSearchInput = imgui.new.char[256](),
     Components = {
         TextColoredRGB = require('ui.components.text-colored-rgb'),
         CenterText = require('ui.components.center-text'),
         CenterColumnText = require('ui.components.center-column-text'),
         ActiveButton = require('ui.components.active-button'),
-        Tooltip = require('ui.components.tooltip')
+        Tooltip = require('ui.components.tooltip'),
+        Link = require('ui.components.link')
     },
     font = {
         Init = require('ui.fonts'),
-        requiredSizes = { 12, 14, 18, 24 }
+        requiredSizes = { 18, 24 }
     }
 }
 
@@ -75,13 +76,26 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
                             imgui.Columns(1)
                             imgui.Separator()
                         else
-                            UI.earnedMoney = UI.earnedMoney + containerDropPrices[data.name].price[0] * data.amount
+                            local item_amount = data.amount
+                            local walletBonus = crypto_wallet.bonusesMapByName[u8:decode(crypto_wallet.list[Config.selectedCryptoWallet[0] + 1])]
+
+                            if Config.selectedEarnedMoneyForumula[0] == 0 then
+                                item_amount = math.floor((item_amount + item_amount * 0.15) + 0.5)
+                            elseif Config.selectedEarnedMoneyForumula[0] == 1 then
+                                item_amount = math.floor((item_amount + item_amount * walletBonus) + 0.5)
+                            elseif Config.selectedEarnedMoneyForumula[0] == 2 then
+                                item_amount = math.floor(((item_amount + item_amount * 0.15) + (item_amount + item_amount * 0.15) * walletBonus) + 0.5)
+                            elseif Config.selectedEarnedMoneyForumula[0] == 3 then
+                                item_amount = math.floor(((item_amount + item_amount * 0.15) + (item_amount + item_amount * 0.15) * walletBonus) + 0.5)
+                            end
+
+                            UI.earnedMoney = UI.earnedMoney + containerDropPrices[data.name].price[0] * item_amount
                             imgui.Columns(3)
                             UI.Components.CenterColumnText(u8(data.name)); imgui.SetColumnWidth(-1, 250)
                             imgui.NextColumn()
                             UI.Components.CenterColumnText(string.format('{5f9a59}%s SA$', Utils.commaValue(containerDropPrices[data.name].price[0], '.'))); imgui.SetColumnWidth(-1, 120)
                             imgui.NextColumn()
-                            UI.Components.CenterColumnText(u8(string.format('{5f9a59}+%s SA$ {6087c4}(%s шт.)', Utils.commaValue(containerDropPrices[data.name].price[0] * data.amount, '.'), data.amount))); imgui.SetColumnWidth(-1, 205)
+                            UI.Components.CenterColumnText(u8(string.format('{5f9a59}+%s SA$ {6087c4}(%s шт.)', Utils.commaValue(containerDropPrices[data.name].price[0] * item_amount, '.'), item_amount))); imgui.SetColumnWidth(-1, 205)
                             imgui.Columns(1)
                             imgui.Separator()
                         end
@@ -105,13 +119,16 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
             end
             imgui.PopFont()
 
-            if imgui.BeginPopupModal(u8 'Настройка цен', _, imgui.WindowFlags.NoResize) then
-                imgui.Text(u8('Поиск:'))
-                UI.priceFilter:Draw('##searchPriceFilter', 400)
+            if imgui.BeginPopupModal(u8('Настройка цен'), _, imgui.WindowFlags.NoResize) then
+                imgui.PushItemWidth(200)
+                imgui.InputTextWithHint('##item search', u8('Поиск предмета'), UI.priceSearchInput, ffi.sizeof(UI.priceSearchInput))
+                imgui.PopItemWidth()
+                local searchQuery = string.toLower(u8:decode(ffi.string(UI.priceSearchInput)))
+
                 if imgui.BeginChild('price settings', imgui.ImVec2(600, 400), true) then
                     for k, v in pairs(containerDropPrices) do
                         if k ~= 'Пачка с деньгами' then
-                            if UI.priceFilter:PassFilter(u8(k)) then
+                            if not searchQuery or searchQuery == '' or string.toLower(k):find(searchQuery) then
                                 imgui.PushItemWidth(135)
                                 if imgui.InputInt('##' .. k, v.price, 0) then
                                     containerDropPrices()
@@ -126,7 +143,7 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
                     imgui.EndChild()
                 end
 
-                if imgui.Button(u8 'Закрыть', imgui.ImVec2(imgui.GetWindowWidth() - 15, 30)) then
+                if imgui.Button(u8('Закрыть'), imgui.ImVec2(imgui.GetWindowWidth() - 15, 30)) then
                     imgui.CloseCurrentPopup()
                 end
             end
@@ -203,6 +220,19 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
                     imgui.EndChild()
                 end
 
+                if imgui.Button(u8('Закрыть'), imgui.ImVec2(imgui.GetWindowWidth() - 15, 30)) then
+                    imgui.CloseCurrentPopup()
+                end
+            end
+
+            if imgui.BeginPopupModal(u8('Информация'), _, imgui.WindowFlags.NoResize) then
+                imgui.Text(u8('Профиль автора на BH:'))
+                imgui.SameLine()
+                UI.Components.Link('https://www.blast.hk/members/572175/', 'bubbles')
+                imgui.Text(u8('GitHub repo:'))
+                imgui.SameLine()
+                UI.Components.Link('https://github.com/qwbash-scripts/cont-opener', 'cont-opener')
+
                 if imgui.Button(u8 'Закрыть', imgui.ImVec2(imgui.GetWindowWidth() - 15, 30)) then
                     imgui.CloseCurrentPopup()
                 end
@@ -215,28 +245,9 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
 
         if imgui.BeginChild('earned money', imgui.ImVec2(-1, 60), true) then
             local earnedMoney = UI.earnedMoney
-            local earnedMoneyVC = math.floor(earnedMoney / Config.buyCostOfVC[0])
-            local walletBonus = crypto_wallet.bonusesMapByName[u8:decode(crypto_wallet.list[Config.selectedCryptoWallet[0] + 1])]
-            local rainbowRainbowMoneyVC = Utils.rainbow_text(string.format('+%s VC$', Utils.commaValue(earnedMoneyVC, '.')), { 'af47ff', 'db8eff', 'cb74ff' })
+            local rainbowRainbowMoneyVC = Utils.rainbow_text(string.format('+%s VC$', Utils.commaValue(math.floor(earnedMoney / Config.buyCostOfVC[0]), '.')), { 'af47ff', 'db8eff', 'cb74ff' })
 
-            if Config.selectedEarnedMoneyForumula[0] == 0 then
-                UI.Components.CenterText(u8(string.format('Итоговая сумма: {5f9a59}+%s SA$ {ffffff}(%s{ffffff})', Utils.commaValue(earnedMoney, '.'), rainbowRainbowMoneyVC)), true)
-            elseif Config.selectedEarnedMoneyForumula[0] == 1 then
-                earnedMoney = math.floor((earnedMoney + earnedMoney * 0.15) + 0.5)
-                earnedMoneyVC = math.floor(earnedMoney / Config.buyCostOfVC[0])
-                rainbowRainbowMoneyVC = Utils.rainbow_text(string.format('+%s VC$', Utils.commaValue(earnedMoneyVC, '.')), { 'af47ff', 'db8eff', 'cb74ff' })
-                UI.Components.CenterText(u8(string.format('Итоговая сумма: {5f9a59}+%s SA$ {ffffff}(%s{ffffff})', Utils.commaValue(earnedMoney, '.'), rainbowRainbowMoneyVC)), true)
-            elseif Config.selectedEarnedMoneyForumula[0] == 2 then
-                earnedMoney = math.floor((earnedMoney + earnedMoney * walletBonus) + 0.5)
-                earnedMoneyVC = math.floor(earnedMoney / Config.buyCostOfVC[0])
-                rainbowRainbowMoneyVC = Utils.rainbow_text(string.format('+%s VC$', Utils.commaValue(earnedMoneyVC, '.')), { 'af47ff', 'db8eff', 'cb74ff' })
-                UI.Components.CenterText(u8(string.format('Итоговая сумма: {5f9a59}+%s SA$ {ffffff}(%s{ffffff})', Utils.commaValue(earnedMoney, '.'), rainbowRainbowMoneyVC)), true)
-            elseif Config.selectedEarnedMoneyForumula[0] == 3 then
-                earnedMoney = math.floor(((earnedMoney + earnedMoney * 0.15) + (earnedMoney + earnedMoney * 0.15) * walletBonus) + 0.5)
-                earnedMoneyVC = math.floor(earnedMoney / Config.buyCostOfVC[0])
-                rainbowRainbowMoneyVC = Utils.rainbow_text(string.format('+%s VC$', Utils.commaValue(earnedMoneyVC, '.')), { 'af47ff', 'db8eff', 'cb74ff' })
-                UI.Components.CenterText(u8(string.format('Итоговая сумма: {5f9a59}+%s SA$ {ffffff}(%s{ffffff})', Utils.commaValue(earnedMoney, '.'), rainbowRainbowMoneyVC)), true)
-            end
+            UI.Components.CenterText(u8(string.format('Итоговая сумма: {5f9a59}+%s SA$ {ffffff}(%s{ffffff})', Utils.commaValue(earnedMoney, '.'), rainbowRainbowMoneyVC)), true)
             imgui.EndChild()
         end
         imgui.End()

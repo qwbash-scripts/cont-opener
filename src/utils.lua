@@ -110,3 +110,9 @@ function Utils.findListInDialog(text, style, linePattern, caseSensitive)
 
     return nil
 end
+
+function string.toLower(str)
+    return select(1, string.gsub(str, '([A-ZÀ-ß¨])', function(c)
+        return string.char(string.byte(c) + (c == '¸' and 16 or 32))
+    end))
+end

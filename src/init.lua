@@ -1,6 +1,7 @@
 DEBUG = MOONLY_BUNDLED == nil
 require('moonloader')
 sampev = require('samp.events')
+ffi = require('ffi')
 cjc = require('carbJsonConfig')
 encoding = require('encoding')
 encoding.default = 'CP1251'
@@ -40,11 +41,6 @@ function main()
     end)
 
     sampRegisterChatCommand('contopen', function()
-        if autoOpen then
-            autoOpen = false
-            return
-        end
-
         if not Config.openInInventory[0] and crypto_wallet.slot == nil then
             Utils.msg('Нету крипто-сумки в инвентаре или не удалось получить её слот!')
             Utils.msg('Переместите её в другой слот / Отсортируйте инвентарь / Перезайдите в игру')
@@ -58,10 +54,12 @@ function main()
 
         if Config.openInInventory[0] and table.Size(containers.accessible_containers) == 0 then
             Utils.msg('Нету доступных контейнеров в инвентаре или не удалось получить их количество!')
+            Utils.msg('Отсортируйте инвентарь / Перезайдите в игру')
             return
         end
 
         autoOpen = not autoOpen
+        Utils.msg('Автооткрытие', autoOpen and 'включено' or 'выключено')
     end)
 
     while true do wait(0) end

@@ -18,7 +18,7 @@ Config = {
     openInInventory = imgui.new.bool(false),
     boxTypeColor = imgui.new.float[4](0.227451, 0.490196, 0.909804, 1.0),
     hideMessagesFromPremiumVIP = imgui.new.bool(false),
-    hideMessagesFromCryptoWallet = imgui.new.bool(true),
+    hideMessagesFromCryptoWallet = imgui.new.bool(false),
     autoCloseContainerMenu = imgui.new.bool(false),
     hideContainerMenu = imgui.new.bool(false),
     -- Почему не сохраняло?
