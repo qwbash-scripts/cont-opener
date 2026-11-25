@@ -1,13 +1,18 @@
-DEBUG = MOONLY_BUNDLED == nil
 require('moonloader')
 sampev = require('samp.events')
 ffi = require('ffi')
-cjc = require('carbJsonConfig')
+ok, cjc = pcall(require, 'carbJsonConfig')
+if not ok then
+    error('Не найдена библиотека carbJsonConfig. Ссылка на библиотеку: https://www.blast.hk/threads/214849/')
+end
 encoding = require('encoding')
 encoding.default = 'CP1251'
 u8 = encoding.UTF8
 
-ti = require('tabler_icons')
+ok, ti = pcall(require, 'tabler_icons')
+if not ok then
+    error('Не найдена библиотека carbJsonConfig. Ссылка на библиотеку: https://www.blast.hk/threads/94826/')
+end
 imgui = require('mimgui')
 
 

@@ -7,7 +7,7 @@ return function(link, name, myfunc)
     local resultBtn = imgui.InvisibleButton('##' .. link .. name, size)
     if resultBtn then
         if not myfunc then
-            CEF:evalcef("window.cef.Open('" .. tostring(link) .. "', 1);")
+            CEF:eval("window.cef.Open('" .. tostring(link) .. "', 1);")
         end
     end
     imgui.SetCursorPos(p2)

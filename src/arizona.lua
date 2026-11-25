@@ -74,8 +74,8 @@ function Arizona:Init()
                             lua_thread.create(function()
                                 wait(350)
                                 CEF:send(string.format('clickOnButton|{"type": 50, "slot": %d, "action": 1}', table.random_key(containers.accessible_containers_in_wallet)))
-                                CEF:evalcef("window.executeEvent('event.setActiveView', '[ null ]');")
-                                CEF:evalcef("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
+                                CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
+                                CEF:eval("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
                             end)
                         end
                     end
@@ -90,7 +90,7 @@ function Arizona:Init()
                                     lua_thread.create(function()
                                         wait(350)
                                         CEF:send(string.format('clickOnButton|{"type": 1, "slot": %d, "action": 1}', table.random_key(containers.accessible_containers)))
-                                        CEF:evalcef("window.executeEvent('event.setActiveView', '[ null ]');")
+                                        CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
                                     end)
                                 else
                                     lua_thread.create(function()
@@ -173,12 +173,9 @@ function Arizona:Init()
                     end
 
                     if autoOpen and event == 'event.setActiveView' and data:find('%["ContainerContent"%]') then
-                        -- lua_thread.create(function()
-                        --     wait(250)
                         CEF:send('containerContent.closeMenu')
-                        CEF:evalcef("window.executeEvent('event.setActiveView', '[ null ]');")
-                        CEF:evalcef("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
-                        -- end)
+                        CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
+                        CEF:eval("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
                     end
 
                     if event == 'event.notify.initialize' and data:find('Открыть можно только на территории аукциона контейнеров') then
@@ -208,10 +205,6 @@ function Arizona:Init()
                     local event = str:match('^cont_opener:(.+);')
 
                     if event == 'collectInaccessibleContainers' then
-                        if DEBUG then
-                            Utils.dmsg('collectInaccessibleContainers clicked')
-                        end
-
                         if not crypto_wallet.isCollectingInaccessibleContainers then
                             crypto_wallet.isCollectingInaccessibleContainers = true
                             lua_thread.create(function()
@@ -220,9 +213,6 @@ function Arizona:Init()
                                     wait(250)
                                 end
 
-                                if DEBUG then
-                                    Utils.dmsg('collectInaccessibleContainers finished')
-                                end
                                 crypto_wallet.isCollectingInaccessibleContainers = false
                             end)
                         else
@@ -231,10 +221,6 @@ function Arizona:Init()
                     end
 
                     if event == 'storeAccessibleContainers' then
-                        if DEBUG then
-                            Utils.dmsg('storeAccessibleContainers clicked')
-                        end
-
                         if not crypto_wallet.isStoringAccessibleContainers then
                             crypto_wallet.isStoringAccessibleContainers = true
                             lua_thread.create(function()
@@ -245,9 +231,6 @@ function Arizona:Init()
                                     wait(250)
                                 end
 
-                                if DEBUG then
-                                    Utils.dmsg('storeAccessibleContainers finished')
-                                end
                                 crypto_wallet.isStoringAccessibleContainers = false
                             end)
                         else

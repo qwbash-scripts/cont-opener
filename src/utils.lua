@@ -4,10 +4,6 @@ function Utils.msg(...)
     return sampAddChatMessage(string.format('[ :lua: ] Cont Opener{ffffff}: %s', table.concat({ ... }, ' ')), 15890980)
 end
 
-function Utils.dmsg(text, ...)
-    return sampAddChatMessage(string.format('[ DEBUG ] Cont Opener{ffffff}: %s', table.concat({ ... }, ' ')), 15890980)
-end
-
 function Utils.commaValue(n, char) -- https://www.blast.hk/threads/39380/
     local left, num, right = string.match(n, '^([^%d]*%d)(%d*)(.-)$')
     return left .. (num:reverse():gsub('(%d%d%d)', '%1' .. char):reverse()) .. right

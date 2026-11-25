@@ -15,7 +15,7 @@ function CEF:evalanon(code)
     self:evalcef(('(() => {%s})()'):format(code))
 end
 
-function CEF:evalcef(code, encoded)
+function CEF:eval(code, encoded)
     encoded = encoded or 0
     local bs = raknetNewBitStream();
     raknetBitStreamWriteInt8(bs, 17);
