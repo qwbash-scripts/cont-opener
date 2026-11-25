@@ -12,7 +12,7 @@ function CEF:send(str)
 end
 
 function CEF:evalanon(code)
-    self:evalcef(('(() => {%s})()'):format(code))
+    self:eval(('(() => {%s})()'):format(code))
 end
 
 function CEF:eval(code, encoded)
