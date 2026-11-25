@@ -1,4 +1,4 @@
-EarnedMoneyFormulas = { u8('Без ничего'), u8('Уровень ВИП'), u8('Выбранная сумка'), u8('Уровень ВИП + Выбранная сумка') }
+EarnedMoneyFormulas = { u8('Нет бонусов'), u8('Уровень ВИП'), u8('Выбранная сумка'), u8('Уровень ВИП + Выбранная сумка') }
 UI = {
     window = imgui.new.bool(false),
     currentDateLog = '',
@@ -196,12 +196,12 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
                     if imgui.Combo(u8('СумОчка'), Config.selectedCryptoWallet, UI.cryptoWalletsCombo, #crypto_wallet.list) then
                         Config()
                     end
-                    if imgui.Combo(u8('##Как считаем?'), Config.selectedEarnedMoneyForumula, UI.EarnedMoneyFormulasCombo, #EarnedMoneyFormulas) then
+                    if imgui.Combo(u8('##Какие у тебя бонусы?'), Config.selectedEarnedMoneyForumula, UI.EarnedMoneyFormulasCombo, #EarnedMoneyFormulas) then
                         Config()
                     end
                     imgui.PopItemWidth()
                     imgui.SameLine()
-                    imgui.Text(u8('Как считаем итоговую сумму?'))
+                    imgui.Text(u8('Какие у тебя бонусы?'))
 
                     imgui.Separator()
 
