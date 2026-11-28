@@ -31,6 +31,7 @@ Config = {
     canISellElegy = imgui.new.bool(false),
     canISellCheetah = imgui.new.bool(false),
     canISellPhoenix = imgui.new.bool(false),
-    canISellKarting = imgui.new.bool(false)
+    canISellKarting = imgui.new.bool(false),
+    mindlesslyManipulate = imgui.new.bool(false)
 }
 cjc.load(CONFIG_PATH, Config)

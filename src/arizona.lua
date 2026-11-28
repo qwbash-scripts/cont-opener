@@ -45,8 +45,9 @@ containers = {
         [7435] = 'НФТ Каменного Человека',
         [9333] = 'Супер НФТ контейнер'
     },
-    inaccessible_containers = {},
     accessible_containers = {},
+    inaccessible_containers = {},
+    inaccessible_containers_in_wallet = {},
     accessible_containers_in_wallet = {},
     free_wallet_slots = {},
     last_container_opened = nil
@@ -71,12 +72,18 @@ function Arizona:Init()
                         CEF:evalanon(JS.StoreAccessibleContainers)
 
                         if autoOpen and not Config.openInInventory[0] then
-                            lua_thread.create(function()
-                                wait(350)
-                                CEF:send(string.format('clickOnButton|{"type": 50, "slot": %d, "action": 1}', table.random_key(containers.accessible_containers_in_wallet)))
-                                CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
-                                CEF:eval("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
-                            end)
+                            if table.Size(containers.accessible_containers_in_wallet) == 0 then
+                                autoOpen = false
+                                Utils.msg('Доступные к открытию контейнеры в крипто-сумке закончились!')
+                            else
+                                lua_thread.create(function()
+                                    wait(350)
+                                    local slot = table.random_key(containers.accessible_containers_in_wallet)
+                                    CEF:send(string.format('clickOnButton|{"type": 50, "slot": %d, "action": 1}', slot))
+                                    CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
+                                    CEF:eval("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
+                                end)
+                            end
                         end
                     end
 
@@ -87,11 +94,17 @@ function Arizona:Init()
                         if autoOpen then
                             if containers.last_container_opened == nil or containers.last_container_opened < os.time() - 0.5 then
                                 if Config.openInInventory[0] then
-                                    lua_thread.create(function()
-                                        wait(350)
-                                        CEF:send(string.format('clickOnButton|{"type": 1, "slot": %d, "action": 1}', table.random_key(containers.accessible_containers)))
-                                        CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
-                                    end)
+                                    if table.Size(containers.accessible_containers) == 0 then
+                                        autoOpen = false
+                                        Utils.msg('Доступные к открытию контейнеры в инвентаре закончились!')
+                                    else
+                                        lua_thread.create(function()
+                                            wait(350)
+                                            local slot = table.random_key(containers.accessible_containers)
+                                            CEF:send(string.format('clickOnButton|{"type": 1, "slot": %d, "action": 1}', slot))
+                                            CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
+                                        end)
+                                    end
                                 else
                                     lua_thread.create(function()
                                         wait(350)
@@ -115,7 +128,7 @@ function Arizona:Init()
                                     if item.item == nil then containers.free_wallet_slots[item.slot] = item.slot end
 
                                     if item.item and item.time and item.time ~= 0 then
-                                        containers.inaccessible_containers[item.slot] = item.slot
+                                        containers.inaccessible_containers_in_wallet[item.slot] = item.slot
                                     end
 
                                     if item.item and item.time and item.time == 0 then
@@ -128,13 +141,17 @@ function Arizona:Init()
                         if json[1].data.type == 50 and json[1].action == 2 then
                             local item = json[1].data.items[1]
                             if not item.item then
-                                containers.inaccessible_containers[item.slot] = nil
+                                containers.inaccessible_containers_in_wallet[item.slot] = nil
                                 containers.free_wallet_slots[item.slot] = item.slot
                             else
                                 if item.time and item.time ~= 0 then
                                     containers.accessible_containers_in_wallet[item.slot] = nil
+                                    containers.inaccessible_containers_in_wallet[item.slot] = item.slot
                                 end
 
+                                if item.time and item.time == 0 then
+                                    containers.accessible_containers_in_wallet[item.slot] = item.slot
+                                end
                                 containers.free_wallet_slots[item.slot] = nil
                             end
                         end
@@ -143,12 +160,19 @@ function Arizona:Init()
                         if json[1].data.type == 1 and json[1].data.items and (json[1].action == 0 or json[1].action == 2) then
                             if json[1].action == 0 and json[1].data.items[1] and json[1].data.items[1].slot == 0 then
                                 containers.accessible_containers = {}
+                                containers.inaccessible_containers = {}
                             end
 
                             for _, item in pairs(json[1].data.items) do
                                 if containers.mapById[item.item] ~= nil then
                                     if item.item and item.time and item.time == 0 then
                                         containers.accessible_containers[item.slot] = item.slot
+                                        containers.inaccessible_containers[item.slot] = nil
+                                    end
+
+                                    if item.item and item.time and item.time ~= 0 then
+                                        containers.accessible_containers[item.slot] = nil
+                                        containers.inaccessible_containers[item.slot] = item.slot
                                     end
                                 elseif crypto_wallet.mapById[item.item] ~= nil then
                                     crypto_wallet.slot = item.slot
@@ -157,6 +181,7 @@ function Arizona:Init()
                                 else
                                     rofloCars.slots[item.slot] = nil
                                     containers.accessible_containers[item.slot] = nil
+                                    containers.inaccessible_containers[item.slot] = nil
                                 end
                             end
                         end
@@ -175,7 +200,7 @@ function Arizona:Init()
                     if autoOpen and event == 'event.setActiveView' and data:find('%["ContainerContent"%]') then
                         CEF:send('containerContent.closeMenu')
                         CEF:eval("window.executeEvent('event.setActiveView', '[ null ]');")
-                        CEF:eval("window.executeEvent('cef.toggleServerCursor', `[false,true]`);")
+                        CEF:eval("window.executeEvent('cef.toggleServerCursor', `[false,false]`);")
                     end
 
                     if event == 'event.notify.initialize' and data:find('Открыть можно только на территории аукциона контейнеров') then
@@ -206,15 +231,40 @@ function Arizona:Init()
 
                     if event == 'collectInaccessibleContainers' then
                         if not crypto_wallet.isCollectingInaccessibleContainers then
-                            crypto_wallet.isCollectingInaccessibleContainers = true
-                            lua_thread.create(function()
-                                for k, v in pairs(containers.inaccessible_containers) do
-                                    CEF:send(string.format('clickOnButton|{"type": 50,"slot": %s, "action": 65536}', v))
-                                    wait(250)
-                                end
+                            if Config.mindlesslyManipulate[0] then
+                                if table.Size(containers.inaccessible_containers_in_wallet) ~= 0 or table.Size(containers.accessible_containers_in_wallet) ~= 0 then
+                                    crypto_wallet.isCollectingInaccessibleContainers = true
+                                    lua_thread.create(function()
+                                        for k, v in pairs(containers.accessible_containers_in_wallet) do
+                                            CEF:send(string.format('clickOnButton|{"type": 50,"slot": %s, "action": 65536}', v))
+                                            wait(250)
+                                        end
 
-                                crypto_wallet.isCollectingInaccessibleContainers = false
-                            end)
+                                        for k, v in pairs(containers.inaccessible_containers_in_wallet) do
+                                            CEF:send(string.format('clickOnButton|{"type": 50,"slot": %s, "action": 65536}', v))
+                                            wait(250)
+                                        end
+
+                                        crypto_wallet.isCollectingInaccessibleContainers = false
+                                    end)
+                                else
+                                    Utils.msg('В крипто-сумке нету контейнеров или не удалось получить их слоты')
+                                end
+                            else
+                                if table.Size(containers.inaccessible_containers_in_wallet) ~= 0 then
+                                    crypto_wallet.isCollectingInaccessibleContainers = true
+                                    lua_thread.create(function()
+                                        for k, v in pairs(containers.inaccessible_containers_in_wallet) do
+                                            CEF:send(string.format('clickOnButton|{"type": 50,"slot": %s, "action": 65536}', v))
+                                            wait(250)
+                                        end
+
+                                        crypto_wallet.isCollectingInaccessibleContainers = false
+                                    end)
+                                else
+                                    Utils.msg('В крипто-сумке нету контейнеров с КД или не удалось получить их слоты')
+                                end
+                            end
                         else
                             Utils.msg('Я уже достаю контейнеры! Не флуди...')
                         end
@@ -222,17 +272,44 @@ function Arizona:Init()
 
                     if event == 'storeAccessibleContainers' then
                         if not crypto_wallet.isStoringAccessibleContainers then
-                            crypto_wallet.isStoringAccessibleContainers = true
-                            lua_thread.create(function()
-                                for k, v in pairs(containers.accessible_containers) do
-                                    if table.Size(containers.free_wallet_slots) == 0 then break end
-
-                                    CEF:send(string.format('inventory.moveItemForce|{"slot": %s, "type": 1, "amount": 1}', v))
-                                    wait(250)
+                            if Config.mindlesslyManipulate[0] then
+                                if table.Size(containers.accessible_containers) ~= 0 or table.Size(containers.inaccessible_containers) ~= 0 then
+                                    crypto_wallet.isStoringAccessibleContainers = true
+                                    lua_thread.create(function()
+                                        while table.Size(containers.accessible_containers) ~= 0 or table.Size(containers.inaccessible_containers) ~= 0 do
+                                            if table.Size(containers.free_wallet_slots) == 0 then break end
+                                            local slot = table.random_key(containers.inaccessible_containers) or table.random_key(containers.accessible_containers)
+                                            if slot then
+                                                CEF:send(string.format('inventory.moveItemForce|{"slot": %s, "type": 1, "amount": 1}', slot))
+                                            else
+                                                Utils.msg('Не удалось получить слот')
+                                                break
+                                            end
+                                            wait(250)
+                                        end
+                                        crypto_wallet.isStoringAccessibleContainers = false
+                                    end)
+                                else
+                                    Utils.msg('Нету контейнеров в инвентаре или не удалось получить их количество')
+                                    Utils.msg('Отсортируйте инвентарь / Перезайдите в игру')
                                 end
+                            else
+                                if table.Size(containers.accessible_containers) ~= 0 then
+                                    crypto_wallet.isStoringAccessibleContainers = true
+                                    lua_thread.create(function()
+                                        for k, v in pairs(containers.accessible_containers) do
+                                            if table.Size(containers.free_wallet_slots) == 0 then break end
 
-                                crypto_wallet.isStoringAccessibleContainers = false
-                            end)
+                                            CEF:send(string.format('inventory.moveItemForce|{"slot": %s, "type": 1, "amount": 1}', v))
+                                            wait(250)
+                                        end
+
+                                        crypto_wallet.isStoringAccessibleContainers = false
+                                    end)
+                                else
+                                    Utils.msg('Нет контейнеров без КД в инвентаре')
+                                end
+                            end
                         else
                             Utils.msg('Я уже складываю контейнеры! Не флуди...')
                         end

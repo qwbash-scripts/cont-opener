@@ -177,7 +177,6 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
                         Arizona:applyBoxTypeIconColor(Config.boxTypeColor)
                     end
 
-
                     imgui.Separator()
 
                     imgui.PushItemWidth(120)
@@ -202,6 +201,15 @@ imgui.OnFrame(function() return UI.window[0] end, function(player)
                     imgui.PopItemWidth()
                     imgui.SameLine()
                     imgui.Text(u8('Какие у тебя бонусы?'))
+
+                    if imgui.Checkbox(u8('Доставать/складывать все контейнеры из/в крипто-сумки'), Config.mindlesslyManipulate) then
+                        Config()
+                    end
+                    imgui.SameLine()
+                    imgui.PushFont(UI.font[18])
+                    imgui.Text(ti('question-mark'))
+                    imgui.PopFont()
+                    UI.Components.Tooltip(u8('Включено - будут доставаться/складывать в крипто-сумку любые контейнеры (с кд или без)\nВыключено - будут доставаться только контейнеры с КД и складываться контейнеры без КД'))
 
                     imgui.Separator()
 

@@ -64,7 +64,11 @@ function main()
         end
 
         autoOpen = not autoOpen
-        Utils.msg('Автооткрытие', autoOpen and 'включено' or 'выключено')
+        if Config.openInInventory[0] then
+            Utils.msg('Автооткрытие из инвентаря', autoOpen and 'включено' or 'выключено')
+        else
+            Utils.msg('Автооткрытие из крипто-сумки', autoOpen and 'включено' or 'выключено')
+        end
     end)
 
     while true do wait(0) end
